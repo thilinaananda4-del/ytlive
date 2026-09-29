@@ -1,0 +1,26 @@
+name: Manoparak 2 Stream
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: livestream
+  cancel-in-progress: true
+
+jobs:
+  stream:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install ffmpeg
+        run: sudo apt update && sudo apt install -y ffmpeg
+
+      - name: Start streaming
+        run: |
+          ffmpeg -re -stream_loop -1 -i bg.mp4 -f concat -safe 0 -i songs.txt \
+          -map 0:v -map 1:a -c:v libx264 -preset veryfast -b:v 2500k -maxrate 2500k -bufsize 5000k \
+          -pix_fmt yuv420p -g 60 -c:a aac -b:a 128k -ar 44100 -shortest \
+          -f flv rtmp://a.rtmp.youtube.com/live2/${{ secrets.YT_STREAM_KEY }}
